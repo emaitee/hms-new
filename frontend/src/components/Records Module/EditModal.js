@@ -1,259 +1,505 @@
-import React, { Component } from 'react'
-import { Button,  FormGroup, Container, Row, Table, Col, Label, Collapse, Input,  InputGroupAddon, InputGroup, Modal, ModalHeader, ModalBody} from 'reactstrap'
+import React from 'react';
+import {
+  Button,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Col,
+  Label,
+  FormGroup,
+} from 'reactstrap';
+import 'bootstrap/dist/css/bootstrap.css';
+import { FormErrors } from './FormErrors';
+import defaultImage from '../../images/default_image.png';
+import { _fetchData, _postData } from '../helpers';
 
-export default class EditModal extends Component {
-    constructor(props) {
-      super(props)
-    
-      this.state = {
-        patientInfo: this.props.patients,
-        id: '',
-        surname: '',
-        firstname: '',
-        age: '',
-        gender: '',
-        maritalstatus: '',
-        DOB: '',
-        tribe: '',
-        phoneNo: '',
-        email: '',
-        nationality: '',
-        state: '',
-        lga: '',
-        occupation: '',
-        address: '',
-        kinName: '',
-        kinRelationship: '',
-        kinPhone: '',
-        kinEmail: '',
-        kinOccupation: '',
-        kinAddress: '',
-      }
+/**
+ * The modal page for registering new patients
+ * It consists of the input fields for filling the
+ * details of the patient
+ */
+class ModalPage extends React.Component {
+  constructor(props) {
+    super(props);
+
+    //initiating the state
+    this.state = {
+      id: '',
+      surname: '',
+      firstname: '',
+      gender: '',
+      age: '',
+      maritalstatus: '',
+      DOB: '',
+      tribe: '',
+      religion: '',
+      phoneNo: '',
+      email: '',
+      nationality: '',
+      state: '',
+      lga: '',
+      occupation: '',
+      address: '',
+      kinName: '',
+      kinrelationship: '',
+      kinphone: '',
+      kinemail: '',
+      kinoccupation: '',
+      kinAddress: '',
+      formErrors: { email: '', password: '' },
+      emailValid: false,
+      passwordValid: false,
+      formValid: false,
+      modal: false,
+      selectedFile: ""
+    };
+  }
+
+  /**
+   * Handles the gender text field change
+   */
+  setGender = e => {
+    this.setState({ gender: e.target.value });
+  };
+
+  /**
+   * Handles change in the text field
+   */
+  logChange = e => {
+    this.setState({ [e.target.ref]: e.target.value });
+  };
+
+  /**
+   * This toggles the modal page
+   */
+  toggle = () => {
+    this.setState({
+      modal: !this.state.modal,
+    });
+  };
+
+  /**
+   * This handles the change when user input some
+   * data in the text fields
+   */
+  handleUserInput = e => {
+    const name = e.target.name;
+    const value = e.target.value;
+    this.setState({ [name]: value }, () => {
+      this.validateField(name, value);
+    });
+  };
+
+  /**
+   * The method that validates the text fields and enable
+   *  the submit button only if all data in the fields are valid
+   */
+  validateField = (fieldName, value) => {
+    let fieldValidationErrors = this.state.formErrors;
+    let emailValid = this.state.emailValid;
+    let firstnameValid = this.state.firstnameValid;
+    let surnameValid = this.state.surnameValid;
+
+    /**
+     * this sets the condition for each field using the fieldName
+     *  and also the corresponding error if the condition
+     *  is not met
+     */
+    switch (fieldName) {
+      case 'email':
+        emailValid = value.match(/^([\w.%+-]+)@([\w-]+\.)+([\w]{2,})$/i);
+        fieldValidationErrors.email = emailValid ? '' : ' is invalid';
+        break;
+      case 'firstname':
+        firstnameValid = value.length > 0;
+        fieldValidationErrors.firstname = firstnameValid ? '' : ' is too short';
+        break;
+      case 'surname':
+        surnameValid = value.length > 0;
+        fieldValidationErrors.surname = surnameValid ? '' : ' is too short';
+        break;
+      default:
+        break;
+    }
+    this.setState(
+      {
+        formErrors: fieldValidationErrors,
+        emailValid: emailValid,
+        firstnameValid: firstnameValid,
+        surnameValid: surnameValid,
+      },
+      this.validateForm
+    );
+  };
+
+  /**
+   * The method that eventually validate the form
+   */
+  validateForm() {
+    this.setState({
+      formValid:
+        this.state.emailValid &&
+        this.state.firstnameValid &&
+        this.state.surnameValid,
+    });
+  }
+
+  //if there is error
+  errorClass(error) {
+    return error.length === 0 ? '' : 'has-error';
+  }
+
+  /**
+   * Handles the submit button click
+   */
+  handleSubmit = event => {
+    event.preventDefault();
+    const data = {};
+    data.gender = this.state.gender;
+    for (const field in this.refs) {
+      data[field] = this.refs[field].value;
     }
 
-    componentDidMount = () => {
-        console.log('Component was just mounted!')
-      console.log(this.props.patientToBeEdited)
-    }
-    
-    onClick = () => {
-        console.log(this.props.patientToBeEdited)
-    }
-    
-    handleEdit = (e) => {
-        //Edit functionality
-        e.preventDefault()
-       
-        var data = {
-            firstname: this.state.firstname,
-            surname: this.state.surname,
-            id: this.state.id,
-            gender: this.state.gender
-        }
-      
-        fetch('http://localhost:4000/patientrecords/edit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        }).then(function(response) {
-            if (response.status >= 400) {
-                throw new Error("Bad response from server");
-            }
-            return response.json()
-        }).then(function(data) {
-            console.log(data)
-            if (data === "success") {
-                this.setState({
-                    msg: "User has been edited."
-                });
-            }
-        }).catch(function(err) {
-            return err;
-        });
-    }
+    this.props.receiveState(data);
 
-    setGender = (e) => {
-        this.setState({ gender: e.target.value })
-    }
+    let route = 'patientrecords/new';
+    let callback = () => this.setState({ msg: 'Thanks for registering' });
+    _postData({ route, data, callback });
+  };
 
-    logChange = (e) => {
-        this.setState({[e.target.ref]: e.target.value}); 
-    }
+  get = () => {
+    let self = this;
+    let route = 'patientrecords/getId';
+    let callback = data => self.setState({ id: JSON.stringify(data) });
+    _fetchData({ route, callback });
+  };
+
+  fileChangedHandler = (event) => {
+    this.setState({selectedFile: event.target.files[0]})
+  }
+
+  uploadHandler = () => { 
+    console.log(this.state.selectedFile)
+  }
 
   render() {
     return (
       <div>
-        <Modal size="lg"   isOpen={this.props.modalIsOpen} >
-                <ModalHeader >Edit Patient <button id="btn" onClick={this.props.closeModal} className="btn btnRight">x</button></ModalHeader>
-                <ModalBody>
-                <form  onSubmit={this.handleEdit} method="POST">
-         <FormGroup row>
-         <Col md={5}>
+        <Button onClick={this.toggle}>Add New patient</Button>
+        {/* the modal starts here */}
+        <Modal isOpen={this.state.modal} toggle={this.toggle} size="lg">
+          <ModalHeader toggle={this.toggle}>Add New patient</ModalHeader>
+          <ModalBody>
+            {/* the form */}
+            <form onSubmit={this.handleSubmit} method="POST">
+              <div className="row">
+                <div className="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                  <image
+                      src={defaultImage}
+                      alt="default image"
+                      className="col-xs-2 col-sm-2 col-md-2 col-lg-3"
+                    />
+                  <input type="file" onChange={this.fileChangedHandler} />
+                  <button onClick={this.uploadHandler}>Upload!</button>                  
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-6 col-lg-6">
+                  <label>Patient id</label>
+                  <input type="button" onClick={this.get} value="get" />
+                  <input
+                    onChange={this.logChange}
+                    type="text"
+                    ref="id"
+                    className="form-control id"
+                    placeholder="patient id"
+                    value={this.state.id}
+                  />
+                </div>
+              </div>
+
+              <div className="row">
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>SurName</label>
+                  <input
+                    onChange={this.handleUserInput}
+                    name="surname"
+                    type="text"
+                    ref="surname"
+                    className="form-control Surname"
+                    placeholder="SurName"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>FirstName</label>
+                  <input
+                    onChange={this.handleUserInput}
+                    name="firstname"
+                    type="text"
+                    ref="firstname"
+                    className="form-control Firstname"
+                    placeholder="Name"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-4 col-md-3 col-lg-4">
+                  <label>Gender</label>
+                    <label>
+                      <input
+                        onClick={this.setGender}
+                        checked={this.state.gender === 'female'}
+                        type="radio"
+                        value="female"
+                        name="gender"
+                      />{' '}
+                      Female
+                    </label>
+                    <label>
+                      <input
+                        onClick={this.setGender}
+                        checked={this.state.gender === 'male'}
+                        type="radio"
+                        value="male"
+                        name="gender"
+                      />{' '}
+                      Male
+                    </label>
+                </div>
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Age</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="number"
+                    ref="age"
+                    placeholder="Age"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Marital Status</label>
+                  <select
+                    onChange={this.logChange}
+                    ref="maritalstatus"
+                    className="form-control">
+                    <option value="" />
+                    <option value="single">Single</option>
+                    <option value="married">Married</option>
+                    <option value="divorced">Divorced</option>
+                  </select>
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Date Of Birth</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="date"
+                    ref="DOB"
+                    placeholder="Date Of Birth"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Tribe</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="text"
+                    ref="tribe"
+                    placeholder="Tribe"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Religion</label>
+                  <select
+                    onChange={this.logChange}
+                    ref="religion"
+                    className="form-control">
+                    <option value="" />
+                    <option value="islam">Islam</option>
+                    <option value="christianity">Christianity</option>
+                    <option value="traditional">Traditional</option>
+                    <option value="others">Others </option>
+                  </select>
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Phone Number</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="number"
+                    ref="phoneNo"
+                    placeholder="Phone Number"
+                  />
+                </div>
+                
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Email Address</label>
+                  <input
+                    onChange={this.handleUserInput}
+                    name="email"
+                    className="form-control"
+                    type="text"
+                    ref="email"
+                    placeholder="Email Address"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Nationality</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="text"
+                    ref="nationality"
+                    placeholder="Nationality"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>State</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="text"
+                    ref="state"
+                    placeholder="State"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>LGA</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="text"
+                    ref="lga"
+                    placeholder="LGA"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Occupation</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="text"
+                    ref="occupation"
+                    placeholder="Occupation"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Address</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="textarea"
+                    ref="address"
+                    placeholder="Address"
+                  />
+                </div>
+             </div>
+
+                  <h3>Next Of Kin Information</h3>
+                <div className="row">
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Name</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    ref="kinName"
+                    placeholder="Kin Name"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>RelationShip</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="text"
+                    ref="kinRelationship"
+                    placeholder="RelationShip"
+                  />
+                </div>
+
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Phone Number</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="text"
+                    ref="kinPhone"
+                    placeholder=" Kin Phone Number"
+                  />
+                </div>
         
-         <div>
-           <figure className="Figimage"> Upload Passport Here...
-           <input type="file" ref="passport" className="ImgFile" />
-           </figure>
-           </div> 
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Email Address</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="text"
+                    ref="kinEmail"
+                    placeholder=" Kin Email Address"
+                  />
+                </div>
 
-           </Col>
-           <div>{this.state.surname}</div>
-          <Col md={6}>
-          <Label>patient id</Label>
-            <input   onChange={e =>this.setState({id:e.target.value})}     className="form-control" value={this.state.id} placeholder="id" />
-          </Col> 
-      
-        </FormGroup>
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Occupation</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    ref="kinoccupation"
+                    id="Occupation"
+                    placeholder=" Kin Occupation"
+                  />
+                </div>
 
-        <FormGroup row>
-        <div>
-            {/* {
-                this.state.patientInfo.join(', ')
-            } */}
-            <button onClick={this.onClick}>Click</button>
-        </div>
-          {/* <input type='text' value={Object.entries(this.state.patientInfo)} /> */}
-          <Col md={6}>
-          <Label>Surname</Label>
-            <input onChange={e =>this.setState({surname:e.target.value})} className="form-control" value={this.state.surname} placeholder="SurName"/>
-          </Col><br/>
+                <div className="col-xs-6 col-sm-6 col-md-4 col-lg-4">
+                  <label>Address</label>
+                  <input
+                    onChange={this.logChange}
+                    className="form-control"
+                    type="textarea"
+                    ref="kinAddress"
+                    placeholder=" Kin Address"
+                  />
+                </div>
+              </div>
 
-          <Col md={6}>
-          <Label>First Name</Label>
-          <input  onChange={e =>this.setState({firstname:e.target.value})} className="form-control" value={this.state.firstname} placeholder="FirstName" />
-          </Col><br/>
-         
-
-           <Col md={5}>
-            <label className="form-label" >Gender</label>
-            <div className="">
-                <input type="radio" onClick={this.setGender} checked={this.state.gender === 'male'} name="gender" value="male" />Male
-                <input type="radio" onClick={this.setGender} checked={this.state.gender === "female"} name="gender" value="female" />Female
-            </div>
-            
-         </Col>
-         <Col md={3}>
-         <Label>Age</Label>
-          <input type="number" ref="age" id="Age" onChange={e =>this.setState({age:e.target.value})} className="form-control" value={this.state.age} placeholder="Age"/>
-         </Col>
-
-         <Col md={4}>
-         <Label>Marital Status</Label>
-         <input  type="text" ref="maritalstatus" id="MaritalStatus"  onChange={e =>this.setState({maritalstatus:e.target.value})} className="form-control" value={this.state.maritalstatus}  placeholder="Marital Status" />
-         </Col>
-
-         <Col md={5}>
-         <Label>Date Of Birth</Label>
-          <input  type="date" ref="DOB" id="DOB" onChange={e =>this.setState({DOB:e.target.value})} className="form-control" value={this.state.DOB}  placeholder="Date Of Birth" />
-          </Col>
-
-          <Col md={3}>
-         <Label>Tribe</Label>
-          <input type="text" ref="tribe" id="Tribe" onChange={e =>this.setState({tribe:e.target.value})} className="form-control" value={this.state.tribe}  placeholder="Tribe"  />
-          </Col>
-
-          <Col md={4}>
-         <Label>Religion</Label>
-         <select className="form-control" onChange={this.logChange} ref="religion">
-           <option value="islam ">Islam</option>
-           <option value="christianity">Christianity</option>
-           <option value="traditional">Traditional</option>
-        </select>
-          {/* <input  type="text" ref="religion" id="Religion" onChange={e =>this.setState({religion:e.target.value})} className="form-control" value={this.state.religion}  placeholder="Religion"  /> */}
-          </Col>
-
-          <Col md={6}>
-         <Label>Phone Number</Label>
-          <input  type="text" ref="phoneNo" id="PhoneNo" onChange={e =>this.setState({phoneNo:e.target.value})} className="form-control" value={this.state.phoneNo}  placeholder="Phone Number"  />
-          </Col>
-          
-          <Col md={6}>
-         <Label>Email Address</Label>
-          <input  type="text" ref="email" id="Email" onChange={e =>this.setState({email:e.target.value})} className="form-control" value={this.state.email}  placeholder="Email Address" />
-          </Col>
-
-          <Col md={5}>
-         <Label>Nationality</Label>
-          <input  onChange={e =>this.setState({nationality:e.target.value})} className="form-control" type="text"  ref="nationality" value={this.state.nationality}  placeholder="Nationality" />
-          </Col>
-
-          <Col md={3}>
-          <Label>State</Label>
-          <input type="text" className="State" ref="state" id="State" onChange={e =>this.setState({state:e.target.value})} className="form-control" value={this.state.state}  placeholder="State" />
-          </Col> 
-         
-          <Col md={4}>
-          <Label>LGA</Label>
-          <input type="text" className="lga" ref="lga" id="LGA" onChange={e =>this.setState({lga:e.target.value})} className="form-control" value={this.state.lga}  placeholder="LGA"/>
-          </Col> 
-
-         < Col md={5}>
-          <Label>Occupation</Label>
-          <input type="text" className="Occupation" ref="occupation" id="Occupation" onChange={e =>this.setState({occupation:e.target.value})} className="form-control" value={this.state.occupation}  placeholder="Occupation" />
-          </Col> 
-          < Col md={1}></Col> 
-
-          <Col md={6}>
-          <Label>Address</Label>
-          <input type="textarea" className="address" ref="address" onChange={e =>this.setState({address:e.target.value})} className="form-control" value={this.state.address}  id="Address" />
-          </Col>
-          <Col md={12}>
-          <br/>
-          <legend>Next Of Kin Information</legend>             
-              </Col>
-          <Col md={6}>
-          <Label>Name</Label>
-            <input type="text" ref="kinName" className="form-control" onChange={e =>this.setState({kinName:e.target.value})} className="form-control" value={this.state.kinName}  placeholder="Kin Name" />
-          </Col>
-
-          <Col md={6}>
-          <Label>RelationShip</Label>
-            <input  type="text" ref="kinRelationship" className="form-control" onChange={e =>this.setState({kinRelationship:e.target.value})} className="form-control" value={this.state.kinRelationship}  placeholder="RelationShip" />
-          </Col>
-          
-          <Col md={5}>
-         <Label>Phone Number</Label>
-          <input type="text" ref="kinPhone" id="PhoneNo" onChange={e =>this.setState({kinPhone:e.target.value})} className="form-control" value={this.state.kinPhone}  placeholder="Kin Phone Number"  />
-          </Col>
-          <Col md={2}></Col>
-          <Col md={5}>
-         <Label>Email Address</Label>
-          <input type="text" ref="kinEmail" id="KinEmail" onChange={e =>this.setState({kinEmail:e.target.value})} className="form-control" value={this.state.kinEmail}  placeholder="Kin Email Address" />
-          </Col>
-
-          < Col md={5}>
-          <Label>Occupation</Label>
-          <input  type="text" className="Occupation" ref="kinOccupation" id="KOccupation" onChange={e =>this.setState({kinOccupation:e.target.value})} className="form-control" value={this.state.kinOccupation}  placeholder="Occupation"  />
-          </Col> 
-          < Col md={1}></Col> 
-
-          <Col md={6}>
-          <Label>Address</Label>
-          <input  type="textarea" className="Kinaddress" ref="kinAddress" id="KAddress" onChange={e =>this.setState({kinAddress:e.target.value})} className="form-control" value={this.state.kinAddress}  />
-          </Col>
-        </FormGroup>
-        
-        <div className="" >
-            <button type="submit"  className="btn"  onClick={this.closeModal} color="danger" >Submit</button>
-            <button className="btn offset-md-9"  onClick={this.closeModal}>Cancel</button>
-        </div>
-
-        <div className="row">
-        <Col md={4}>  </Col>
-       
-            <Col md={4}>  </Col>
-          </div>
-      
-      </form>
-          
-
-
-                        
-                        </ModalBody>
-                </Modal>
+              <div className="row">
+                <div className="offset-xs-3 offset-sm-3 offset-md-3 offset-lg-3 col-xs-2 col-sm-2 col-md-2 col-lg-2">
+                  <div className="panel panel-default">
+                    <FormErrors formErrors={this.state.formErrors} />
+                  </div>
+                  <button
+                    type="submit"
+                    onClick={this.toggle}
+                    className="btn btn-primary"
+                    disabled={!this.state.formValid}>
+                    Sign up
+                  </button>
+                </div>
+                <div className="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+                  <button
+                    onClick={this.toggle}
+                    className="btn btn-danger">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </form>
+          </ModalBody>
+        </Modal>
       </div>
-    )
+    );
   }
 }
+
+export default ModalPage;
