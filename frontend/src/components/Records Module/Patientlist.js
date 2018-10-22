@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import { FormGroup, Col, Label, Collapse, Modal, ModalHeader, ModalBody} from 'reactstrap';
 import ModalPage from './ModalPage';
-import 'bootstrap/dist/css/bootstrap.css';
 import DoctorsListModal from './DoctorsListModal';
 import { RecordGuide } from '../Guides';
 import image from './../../images/Record 1.png';
@@ -204,7 +203,7 @@ export default class Patientlist extends Component {
        
             <div className="row" style={{backgroundColor:'#ffffff'}}>
                 {/* first empty column */}
-                <Col md="3">
+                <div className="col-xs-12 col-sm-12 col-md-12 col-lg-3">
                     {/* component to render user's guide */}
                     <RecordGuide />
                     {/* component to render the table show patients assigned to doctors
@@ -212,15 +211,15 @@ export default class Patientlist extends Component {
                     <PatientAssignedToday 
                         getNewListByDoctor={this.getNewListByDoctor} 
                     />
-                </Col>
-                <Col md="5">
-                    <div className="col-md-1">
+                </div>
+                <div className="col-xs-12 col-sm-12 col-md-12 col-lg-6">
+                    <div className="">
                         {/* modal component to add a new patient  */}
                         <ModalPage receiveState={this.receiveState.bind(this)} /> 
                     </div>
 
                     <br />
-
+                    
                     <Collapse isOpen={this.state.collapse}>
                         <div className="render-patient-list">
                             {/* this component renders the table of patients displaying some details */}
@@ -266,18 +265,18 @@ export default class Patientlist extends Component {
 
                     <br />
                   
-                </Col>
+                </div>
 
                 {/* empty column by right  */}
-                <Col md="4">
+                <div className="col-xs-12 col-sm-12 col-md-3">
                     {/* image displayed by the side of the Records Module */}
-                    <img src={image} alt="module-pic" style={{width:'30vw',height:'60vh'}} />
-                </Col>
+                    <img src={image} alt="module-pic" className="module-pic" />
+                </div>
 
                 {/* <MyForm /> */}
                 {/* this modal renders the edit modal when you click on "edit" button on a user
                 this modal allows you to edit information about a particular patient */}
-                <Modal size="lg"   isOpen={this.state.modalIsOpen} >
+                <Modal isOpen={this.state.modalIsOpen} >
                     <ModalHeader >Edit Patient <button id="btn" onClick={this.closeModal} className="btn btnRight">x</button></ModalHeader>
                     <ModalBody>
                         <form  onSubmit={this.handleEdit} method="POST">

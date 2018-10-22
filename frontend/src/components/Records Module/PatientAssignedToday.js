@@ -3,25 +3,6 @@ import React, { Component } from 'react';
 import { Card, Table } from 'reactstrap';
 import FreeScrollBar from 'react-free-scrollbar';
 
-class Row extends Component {
-  renderListByDoctor = () => {
-    const doctor = this.props.doctor.Doctors;
-    this.props.getNewListByDoctor(doctor);
-  };
-  render() {
-    const { doctor } = this.props;
-    return (
-      <tr
-        style={{ cursor: 'pointer' }}
-        key={doctor.Doctors}
-        onClick={this.renderListByDoctor}>
-        <td style={{ textAlign: 'left' }}>{doctor.Doctors}</td>
-        <td style={{ textAlign: 'center' }}>{doctor.Patients}</td>
-      </tr>
-    );
-  }
-}
-
 /**
  * This component renders the table consisting of the
  * assigned for a particular date
@@ -70,6 +51,7 @@ export default class extends Component {
     this.fetchData();
   }
 
+
   render() {
     const today = new Date();
     return (
@@ -90,17 +72,20 @@ export default class extends Component {
               <Table striped bordered hover>
                 <thead>
                   <tr>
+                    <th></th>
                     <th>Doctors</th>
                     <th className="moveToCenter">Patients</th>
                   </tr>
                 </thead>
                 <tbody>
                   {this.state.list.map((doctor, i) => (
-                    <Row
-                      key={i}
-                      getNewListByDoctor={this.props.getNewListByDoctor}
-                      doctor={doctor}
-                    />
+                    <tr
+                      style={{ cursor: 'pointer' }}
+                      key={i} onClick={() => this.getNewListByDoctor(doctor.Doctors)}>
+                      <td>{i+1}</td>
+                      <td style={{ textAlign: 'left' }}>{doctor.Doctors}</td>
+                      <td style={{ textAlign: 'center' }}>{doctor.Patients}</td>
+                    </tr>
                   ))}
                 </tbody>
               </Table>
